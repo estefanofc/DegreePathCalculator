@@ -1,5 +1,8 @@
 package felipa;
 
+import java.io.*;
+import java.nio.Buffer;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -12,7 +15,7 @@ public class Graph {
     // can only be modified when graph is initially created
     // when set to false,
     // create 2 edges, one from P->Q and another from Q->P with same weight
-    private boolean directionalEdges;
+    private final boolean directionalEdges;
 
     private int edgesCount = 0;
 
@@ -32,23 +35,27 @@ public class Graph {
 
 
     // constructor, empty graph
-    public Graph(boolean DirectionalEdges) {
-
+    public Graph(boolean directionalEdges) {
+        this.directionalEdges = directionalEdges;
+        vMap = new HashMap<>();
     }
 
     // @return true if vertex added, false if it already is in the graph
     public boolean add(String label) {
-
+        if (vMap.containsKey(label))
+            return false;
+        vMap.put(label, new Vertex(label));
+        return true;
     }
 
     // @return true if vertex is in the graph
     public boolean contains(String label) {
-
+        return vMap.containsKey(label);
     }
 
     // @return total number of vertices
     public int verticesSize() {
-
+        return vMap.size();
     }
 
     // Add an edge between two vertices, create new vertices if necessary
@@ -56,14 +63,56 @@ public class Graph {
     // For digraphs (directed graphs), only one directed edge allowed, P->Q
     // Undirected graphs must have P->Q and Q->P with same weight
     // @return true if successfully connected
-    public boolean connect(String from, String to, int Weight) {
-
+    public boolean connect(String from, String to, int weight) {
+        if (from.equalsIgnoreCase(to))
+            return false;
+        Vertex vFrom;
+        Vertex vTo;
+        if (!vMap.containsKey(to)) {
+            vTo = new Vertex(to);
+            vMap.put(to, vTo);
+        }
+        if (!vMap.containsKey(from)) {
+            vFrom = new Vertex(from);
+            vMap.put(from, vFrom);
+        }
+        if (!isConnected(from, to)) {
+            vFrom = vMap.get(from);
+            vTo = vMap.get(to);
+            Edge newEdge = new Edge(vFrom, vTo, weight);
+            vFrom.getNeighbors().add(newEdge);
+            edgesCount++;
+            return true;
+        }
+        return false;
     }
 
     // Remove edge from graph
     // @return true if edge successfully deleted
-    boolean disconnect(String from, String to) {
-
+    public boolean disconnect(String from, String to) {
+        boolean disconnected = false;
+        Vertex vFrom = vMap.get(from);
+        Vertex vTo = vMap.get(to);
+        List<Edge> fromNeighbors = vFrom.getNeighbors();
+        for (int i = 0; i < fromNeighbors.size(); i++) {
+            if (fromNeighbors.get(i).getTo().equals(vTo)){
+                fromNeighbors.remove(i);
+                disconnected = true;
+                edgesCount--;
+                break;
+            }
+        }
+        if (directionalEdges && disconnected) {
+            List<Edge> toNeighbors = vTo.getNeighbors();
+            for (int i = 0; i < toNeighbors.size(); i++) {
+                if (toNeighbors.get(i).getTo().equals(vFrom)){
+                    toNeighbors.remove(i);
+                    edgesCount--;
+                    break;
+                }
+            }
+        }
+        return disconnected;
     }
 
     // @return total number of edges
@@ -79,7 +128,20 @@ public class Graph {
     // @return string representing edges and weights, "" if vertex not found
     // A-3->B, A-5->C should return B(3),C(5)
     public String getEdgesAsString(String label) {
-        return "";
+//        if (!vMap.containsKey(label))
+//            return "";
+//        stringstream Ss;
+//        Vertex *V = VMap.at(Label);
+//        vector<Edge *> List = V->Neighbors;
+//        if (List.empty())
+//            return "";
+//        sort(List.begin(), List.end(), compareEdges);
+//        for (int I = 0; I < List.size() - 1; ++I) {
+//            Ss << *(List[I]->To) << "(" << List[I]->Weight << ")" << ",";
+//        }
+//        Ss << *(List[List.size() - 1]->To) << "(" << List[List.size() -
+//                1]->Weight << ")";
+//        return Ss.str();
     }
 
     // Read edges from file
@@ -87,8 +149,25 @@ public class Graph {
     // each line represents an edge in the form of "string string int"
     // vertex labels cannot contain spaces
     // @return true if file successfully read
-    public boolean readFile(String filename) {
+    public boolean readFile(String filename) throws IOException {
+        File file = new File(filename);
+        BufferedReader in = new BufferedReader(new FileReader(file));
+        int count;
+        String from = "";
+        String to = "";
+        int weight = 0;
+        count = Integer.parseInt(in.readLine());
+        for (int i = 0; i < count; ++i) {
+            String[] line = in.readLine().split(" ");
+            if (line.length < 3) {
 
+            } else {
+                if (!directionalEdges)
+                    connect(to, from, weight);
+                connect(from, to, weight);
+            }
+        }
+        return true;
     }
 
 //    // depth-first traversal starting from given startLabel
@@ -136,7 +215,10 @@ public class Graph {
 
     //edge comparator for ascending sorting
     private static boolean compareEdges(Edge e1, Edge e2) {
-
+        int compareLabels = e1.getTo().toString().compareTo(e2.getTo().toString());
+        if (compareLabels == 0)
+            return (e2.getWeight() - e1.getWeight()) < 0;
+        return compareLabels < 0;
     }
 
     //edge comparator for descending sorting
