@@ -95,7 +95,7 @@ public class Graph {
         Vertex vTo = vMap.get(to);
         List<Edge> fromNeighbors = vFrom.getNeighbors();
         for (int i = 0; i < fromNeighbors.size(); i++) {
-            if (fromNeighbors.get(i).getTo().equals(vTo)){
+            if (fromNeighbors.get(i).getTo().equals(vTo)) {
                 fromNeighbors.remove(i);
                 disconnected = true;
                 edgesCount--;
@@ -105,7 +105,7 @@ public class Graph {
         if (directionalEdges && disconnected) {
             List<Edge> toNeighbors = vTo.getNeighbors();
             for (int i = 0; i < toNeighbors.size(); i++) {
-                if (toNeighbors.get(i).getTo().equals(vFrom)){
+                if (toNeighbors.get(i).getTo().equals(vFrom)) {
                     toNeighbors.remove(i);
                     edgesCount--;
                     break;
@@ -117,17 +117,19 @@ public class Graph {
 
     // @return total number of edges
     public int edgesSize() {
-
+        return edgesCount;
     }
 
     // @return number of edges from given vertex, -1 if vertex not found
     public int neighborsSize(String label) {
-
+        if (!vMap.containsKey(label))
+            return -1;
+        return vMap.get(label).getNeighbors().size();
     }
 
     // @return string representing edges and weights, "" if vertex not found
     // A-3->B, A-5->C should return B(3),C(5)
-    public String getEdgesAsString(String label) {
+//    public String getEdgesAsString(String label) {
 //        if (!vMap.containsKey(label))
 //            return "";
 //        stringstream Ss;
@@ -142,7 +144,7 @@ public class Graph {
 //        Ss << *(List[List.size() - 1]->To) << "(" << List[List.size() -
 //                1]->Weight << ")";
 //        return Ss.str();
-    }
+//    }
 
     // Read edges from file
     // first line of file is an integer, indicating number of edges
@@ -162,6 +164,9 @@ public class Graph {
             if (line.length < 3) {
 
             } else {
+                from = line[0];
+                to = line[1];
+                weight = Integer.parseInt(line[2]);
                 if (!directionalEdges)
                     connect(to, from, weight);
                 connect(from, to, weight);
@@ -195,9 +200,9 @@ public class Graph {
 //
 //    }
 
-    public List<Vertex> topologicalSort() {
-
-    }
+//    public List<Vertex> topologicalSort() {
+//
+//    }
 
     // minimum spanning tree
     // ONLY works for NONDIRECTED graphs
@@ -209,7 +214,13 @@ public class Graph {
 
     //helper method to check if two vertices are connected
     private boolean isConnected(String from, String to) {
-
+        Vertex vFrom = vMap.get(from);
+        Vertex vTo = vMap.get(to);
+        for (Edge neighbor : vFrom.getNeighbors()) {
+            if (neighbor.getTo().equals(vTo))
+                return true;
+        }
+        return false;
     }
 
 
@@ -223,7 +234,10 @@ public class Graph {
 
     //edge comparator for descending sorting
     private static boolean descendingOrder(Edge e1, Edge e2) {
-
+        int compareLabels = e1.getTo().toString().compareToIgnoreCase(e2.getTo().toString());
+        if (compareLabels == 0)
+            return (e2.getWeight() - e1.getWeight()) > 0;
+        return compareLabels > 0;
     }
 
 }

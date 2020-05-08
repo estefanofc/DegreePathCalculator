@@ -1,10 +1,11 @@
 package felipa;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Vertex {
 
-    private String label;
+    private final String label;
     private List<Edge> neighbors;
 
     /**
@@ -14,6 +15,7 @@ public class Vertex {
      */
     public Vertex(String label) {
         this.label = label;
+        neighbors = new ArrayList<>();
     }
 
     @Override
